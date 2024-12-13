@@ -60,6 +60,6 @@ if st.button("Calculate Price"):
     try:
         price = monte_carlo_american_put(
             S0, K, r, sigma, T, int(n_sim), int(n_steps))
-        st.subheader(f"Calculated American Put Option Price: {price:.4f}")
+        st.subheader(f"Calculated American Put Option Price: {price:.6f}")
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
