@@ -1,0 +1,73 @@
+---
+title: "American-style put options"
+format:
+  html:
+    toc: true
+    number-sections: false # will turn on numbering
+---
+
+
+This tool provides a simulation-based framework to price **American-style put options** using the **Monte Carlo method** combined with backward induction. The implementation allows users to estimate the option value by simulating the underlying asset's price paths and determining the optimal exercise strategy at each time step.
+
+## Methodology
+
+The pricing of American options involves considering the early exercise feature, which adds complexity compared to European options. The valuation is based on the following:
+
+1. **Simulating Asset Paths**:
+   The asset price $S_t$ follows a geometric Brownian motion:
+   $$
+   S_{t+\Delta t} = S_t \exp\left( \left( r - \frac{\sigma^2}{2} \right) \Delta t + \sigma \sqrt{\Delta t} Z \right),
+   $$
+   where:
+   - $r$: Risk-free interest rate.
+   - $\sigma$: Volatility of the asset.
+   - $\Delta t = T / n_{\text{steps}}$: Time increment.
+   - $Z \sim \mathcal{N}(0, 1)$: Standard normal random variable.
+
+2. **Payoff Calculation**:
+   At each time step, the option payoff is:
+   $$
+   \text{Payoff} = \max(K - S_t, 0),
+   $$
+   where $K$ is the strike price.
+
+3. **Backward Induction**:
+   Starting from the option's final payoff at maturity $T$, the code evaluates whether exercising the option is optimal at each step:
+   - If the option is **in the money (ITM)**, calculate the immediate exercise value and the continuation value using regression:
+     $$
+     \text{Continuation Value} = \text{Expected Discounted Payoff}.
+     $$
+   - Compare the two values to decide:
+     $$
+     V_t = \max(\text{Immediate Exercise Value}, \text{Continuation Value}).
+     $$
+
+4. **Regression for Continuation Value**:
+   The continuation value is estimated using a quadratic regression:
+   $$
+   \text{Continuation Value} = a_0 + a_1 S_t + a_2 S_t^2,
+   $$
+   where $a_0, a_1, a_2$ are regression coefficients.
+
+5. **Monte Carlo Estimation**:
+   By averaging over multiple simulated paths, the algorithm estimates the American put option price:
+   $$
+   \text{Option Price} = \mathbb{E}[V_0].
+   $$
+
+## Features of the Code
+
+- **Interactive User Inputs**: The tool allows users to input key parameters such as:
+  - Spot price ($S_0$),
+  - Strike price ($K$),
+  - Risk-free rate ($r$),
+  - Volatility ($\sigma$),
+  - Time to maturity ($T$),
+  - Number of simulations ($n_{\text{sim}}$),
+  - Number of time steps ($n_{\text{steps}}$).
+
+- **Efficient Implementation**: The code uses vectorized operations and regression techniques to compute the continuation value efficiently.
+
+- **Dynamic Visualization**: Users can calculate and view the option price directly through the Streamlit interface.
+
+For further theoretical insights, please refer to the foundational work on this method: [Longstaff-Schwartz Algorithm for American Option Pricing](https://people.math.ethz.ch/~hjfurrer/teaching/LongstaffSchwartzAmericanOptionsLeastSquareMonteCarlo.pdf).
