@@ -14,27 +14,28 @@ def monte_carlo_american_put(S0, K, r, sigma, T, n_sim=10000, n_steps=50):
     S[:, 0] = S0
     for i in range(1, n_steps + 1):
         z = np.random.randn(n_sim)
-        S[:, i] = S[:, i - 1] * \
-            np.exp((r - 0.5 * sigma**2) * dt + sigma * math.sqrt(dt) * z)
+        S[:, i] = S[:, i - 1] * np.exp((r - 0.5 * sigma**2) * dt + sigma * math.sqrt(dt) * z)
 
     payoff = np.maximum(K - S, 0.0)
-    V = payoff[:, -1]
+    V = payoff[:, -1].copy()
 
     # Backward induction
     for t in range(n_steps - 1, 0, -1):
         itm = payoff[:, t] > 0
-        X = S[itm, t]
-        Y = V[itm] * discount
-        if len(X) > 0:
-            coeffs = polyfit(X, Y, 2)
+        # discounted continuation value from t+1 to t (all paths)
+        Y_all = V * discount
+
+        if np.any(itm):
+            X = S[itm, t]
+            coeffs = polyfit(X, Y_all[itm], 2)
             continuation = polyval(X, coeffs)
             exercise = payoff[itm, t]
-            V[itm] = np.where(exercise > continuation,
-                              exercise, V[itm] * discount)
+            V[itm] = np.where(exercise > continuation, exercise, Y_all[itm])
+            V[~itm] = Y_all[~itm]
         else:
-            V = V * discount
+            V = Y_all
 
-    return np.mean(V) * discount
+    return float(np.mean(V) * discount)
 
 
 st.markdown("<h2 style='font-size:24px;'>American Option Pricing via Monte Carlo</h2>",
